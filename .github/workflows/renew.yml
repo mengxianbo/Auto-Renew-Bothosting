@@ -52,14 +52,24 @@ jobs:
         run: |
           python3 run_if_due.py
 
-      - name: 💾 保存上次成功执行时间
+      - name: 💾 保存执行时间
         if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add last_run.txt
-          git diff --cached --quiet || git commit -m "Update renewal timestamp"
-          git push
+
+          if git diff --cached --quiet; then
+            echo "没有时间记录需要更新"
+            exit 0
+          fi
+
+          git commit -m "Update renewal timestamp"
+
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: 🧽 清理进程和临时文件
         if: always()
